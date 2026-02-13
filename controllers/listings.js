@@ -112,6 +112,20 @@ module.exports.showListing = async (req, res) => {
           req.flash("error", " Listing you requested does not exist!");
           return res.redirect("/listings");
      }
+     if (!listing.geometry || !listing.geometry.coordinates || listing.geometry.coordinates.length !== 2) {
+          const query = [listing.location, listing.country].filter(Boolean).join(", ");
+          if (query) {
+               const geometry = await geocodeLocation(query);
+               if (geometry) {
+                    listing.geometry = geometry;
+                    try {
+                         await listing.save();
+                    } catch (err) {
+                         console.warn('Failed to save geometry:', err && err.message ? err.message : err);
+                    }
+               }
+          }
+     }
      console.log(listing);
      res.render("./listings/show.ejs", { listing });
 };
